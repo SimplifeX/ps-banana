@@ -13,3 +13,6 @@ docs/实机记录/grs-probe/
 tools/ui-preview/preview.html
 tools/ui-preview/manifest.js
 tools/ui-preview/shots/
+
+# 改文件前留的手工备份（_backup-日期/），不入库
+_backup-*/
