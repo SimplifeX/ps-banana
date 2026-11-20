@@ -132,54 +132,40 @@
     setTimeout(killOverlays, 300);
   }
 
-  // 调试用：URL 带 debug=1 时把量到的几何数据写进 <title>，方便 --dump-dom 读取
+  // 审计用：URL 带 debug=1 时把「被面板边界切掉的元素」写成 JSON 放进 <title>。
+  // 参考框用视口宽度（= 截图宽度），因为用户看到的就是这个边界：
+  // 展开面板不管内部怎么动画，超出视口的元素就是被切掉的。
   if (Q.debug) {
     setTimeout(function () {
-      var vp = document.getElementById('vp');
-      var cell = getComputedStyle(document.documentElement).getPropertyValue('--cell');
-      var g = document.querySelector('.group') || vp;
-      var gtc = g ? getComputedStyle(g).gridTemplateColumns : 'n/a';
-      var rows = [];
-      var ts = document.querySelectorAll('.tile');
-      var hidden = [];
-      for (var h = 0; h < ts.length; h++) {
-        if (getComputedStyle(ts[h]).display === 'none') hidden.push(ts[h].getAttribute('data-id'));
+      // 注意：documentElement.clientWidth 是真实窗口宽（无头下 552），
+      // 不是被 #w= 钉死的面板宽，必须优先用 Q.w。
+      var W = FW > 0 ? FW : document.documentElement.clientWidth;
+      var out = { w: window.innerWidth, cw: W, clipN: 0, clip: [] };
+      var all = document.body.querySelectorAll('*'), hits = [];
+      for (var i = 0; i < all.length; i++) {
+        var n = all[i], cs = getComputedStyle(n);
+        if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+        if (n.id === 'vp' || n.id === 'bgLayer' || n.id === 'bgBlur' || n.tagName === 'HTML' || n.tagName === 'BODY') continue;
+        var r = n.getBoundingClientRect();
+        if (r.width === 0 && r.height === 0) continue;
+        var over = Math.round(r.right - W);
+        if (over > 1) hits.push([n, over]);
       }
-      rows.push('HIDDEN=' + (hidden.join(',') || 'none'));
-      var exp = document.querySelector('.tile.expanded');
-      if (exp) {
-        var er = exp.getBoundingClientRect();
-        rows.push('EXP=' + Math.round(er.width) + '@' + Math.round(er.left));
-        var row = null;
-        var allRows = exp.querySelectorAll('.w10-row');
-        for (var z = 0; z < allRows.length; z++) {
-          if (allRows[z].textContent.indexOf('图层类型') >= 0) { row = allRows[z]; break; }
-        }
-        rows.push('EXPS=' + document.querySelectorAll('.tile.expanded').length
-          + ' id=' + exp.getAttribute('data-id') + ' cls=' + exp.className.split(' ').slice(0,3).join('.'));
-        if (row) {
-          var rc = row.querySelector('.w10-row-right');
-          rows.push('ROW=row' + Math.round(row.clientWidth) + '/' + Math.round(row.scrollWidth)
-            + ' right' + (rc ? Math.round(rc.clientWidth) + '/' + Math.round(rc.scrollWidth) : '-')
-            + ' btns=' + (rc ? rc.querySelectorAll('.w10-btn').length : 0));
-        }
-        var bad = [];
-        var all = exp.querySelectorAll('.w10-row, .w10-row-right, .w10-panel');
-        for (var q = 0; q < all.length && bad.length < 4; q++) {
-          if (all[q].scrollWidth > all[q].clientWidth + 1) {
-            bad.push((all[q].className || '').split(' ')[0] + ':' + all[q].clientWidth + '<' + all[q].scrollWidth);
-          }
-        }
-        rows.push('OVERFLOW=' + (bad.join(' ') || 'none'));
+      var keep = [];
+      for (var j = 0; j < hits.length; j++) {
+        var anc = hits[j][0].parentElement, nested = false;
+        while (anc) { for (var k = 0; k < hits.length; k++) { if (hits[k][0] === anc) { nested = true; break; } } if (nested) break; anc = anc.parentElement; }
+        if (nested) continue;
+        keep.push({
+          c: (hits[j][0].className || '').toString().split(' ').slice(0, 2).join('.'),
+          id: hits[j][0].id || '',
+          t: (hits[j][0].textContent || '').trim().slice(0, 12),
+          over: hits[j][1]
+        });
       }
-      for (var i = 0; i < Math.min(ts.length, 8); i++) {
-        var r = ts[i].getBoundingClientRect();
-        rows.push(ts[i].getAttribute('data-id') + ':' + Math.round(r.width) + 'x'
-          + Math.round(r.height) + '@' + Math.round(r.left) + ',' + Math.round(r.top));
-      }
-      document.title = 'W=' + window.innerWidth + ' vp=' + (vp ? vp.clientWidth : -1)
-        + ' sw=' + (vp ? vp.scrollWidth : -1) + ' cell=' + cell.trim()
-        + ' | gtc=' + gtc + ' | ' + rows.join(' ');
-    }, 9500);
+      out.clipN = hits.length;
+      out.clip = keep.slice(0, 10);
+      document.title = JSON.stringify(out);
+    }, 7000);
   }
 })();

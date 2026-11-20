@@ -10,6 +10,15 @@
  *   只剩性能开销。现在只在展开态（只有 1 个）保留模糊。
  * ============================================================ */
 
+/* ⚠️ 覆盖顺序（改这里之前必读）
+ * panel.html 先加载 styles/*.css，tiles/tile-*.css 由磁贴引擎在运行时后注入。
+ * 因此：
+ *   - 改 styles/ 里已有的类（.w10-* / .preset-cat-* / .tile-*）→ 本文档直接覆盖即可；
+ *   - 改 tiles/ 里的类（.log-* / .prompt-present-* / .conv-*）→ 同权重会被盖掉，
+ *     必须加一级前缀（.tile .log-list、.conv-root .conv-head）才生效。
+ * 踩过：日志面板的字号与配色规则写了没生效，就是漏了这一条。
+ */
+
 /* ---------- 1. 视口 ---------- */
 /* base.css 的 .bg-blur 写死了 rgba(30,30,46,var(--bg-opacity))，把底色锁在蓝紫上，
  * 改 --bg 没用。这里直接接管，让底色跟随 --s0。 */
@@ -234,15 +243,19 @@
 /* 字号从 9~10px 提到 12px 后，原来的「标签 + 右侧控件」一行放不下了：
    设置面板里「智能对象 / 普通图层」这类按钮会被裁掉，开关被切一半。
    这里让右侧控件可以压缩、可以换行，而不是顶着右边界往外溢。 */
-.w10-row { gap: var(--sp2); }
+/* 整行允许换行：右侧控件组放不下时整体掉到下一行、右对齐，
+   而不是顶着右边界往外溢。参数面板的「关 / 抗截断 / 抗截断+」三个按钮
+   在 280 宽下必然放不下一行，之前第三个按钮直接被切掉一半。 */
+.w10-row { gap: var(--sp2); flex-wrap: wrap; row-gap: 6px; }
+.w10-row-left { flex: 1 1 120px; }
 .w10-row-right {
-  /* 关键：不能让它被 row-left 挤压。flex-shrink:1 会让右侧在内容宽度不足时
-   * 提前换行（「智能对象 / 普通图层」曾被挤成上下两行），所以这里不收缩，
-   * 改由左侧文本区让位（.w10-row-left 已有 min-width:0）。 */
+  /* 不收缩：收缩会让「智能对象 / 普通图层」并排按钮提前折成两行。
+   * 放不下时交给上一层的 flex-wrap 整组换行。 */
   flex-shrink: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
-  margin-left: var(--sp2);
+  margin-left: auto;
+  max-width: 100%;
 }
 .w10-row-right .w10-btn {
   max-width: 100%;
@@ -261,5 +274,103 @@
 .tile.expanded .tile-flip-box,
 .tile.expanding .tile-flip-box { height: auto !important; }
 
-/* ---------- 6. 遮罩 ---------- */
+/* ---------- 6. 面板顶栏（工具条） ---------- */
+/* 生成中心顶栏 = 标题 + 「隐藏发送 / 自动传回」+ 3 个图标按钮。
+   tile-center.css 里写的是 nowrap + overflow:hidden，280 宽下最后两个按钮
+   直接被裁掉（右侧只剩半个图标）。这里放开换行，第二行右对齐。
+   注意：tile-*.css 是运行时后注入的，同权重会盖掉 v7-shell.css，
+   所以选择器要带 .conv-root 提一级。 */
+.conv-root .conv-head {
+  flex-wrap: wrap;
+  white-space: normal;
+  overflow: visible;
+  row-gap: 4px;
+  justify-content: flex-end;
+}
+/* 面板顶部已经写着「生成中心 / 对话 · 0 条」，面板内再来一个「📮 生成中心」
+   是重复信息，而且占掉 60px 宽逼得按钮换行。展开态里收掉它。 */
+.conv-root .conv-head .conv-title { display: none; }
+/* 图标按钮（📁 🗑️ ⬇）按 12px 会又高又宽，收到 11px / 3+6 内距 */
+.conv-root .conv-head .w10-btn {
+  padding: 3px 6px;
+  font-size: var(--fs-sm);
+  line-height: 1.3;
+}
+
+/* ---------- 8. 预置面板的分类网格 ---------- */
+/* 行高被 align-content:stretch 撑满整个面板：卡片本身按 aspect-ratio 只有
+   ~80px 高，行间距却被拉到三四十像素，13 个分类看着像散落一地。
+   改成按内容高度排列、间距统一 4px。 */
+.preset-cat-grid { align-content: start; gap: 4px; }
+.preset-cat-card-name { font-size: var(--fs-xs); font-weight: 500; }
+/* 分类图标和主网格统一成单色，否则同屏彩色 emoji 与灰度磁贴混在一起很跳。 */
+.preset-cat-card-icon { filter: grayscale(1) brightness(1.25) contrast(0.95); }
+
+/* ---------- 9. 提示词面板 ---------- */
+/* 工具条上的 ▶ 与 × 原来是 22×18 / 18×18 的薄荷绿与粉红小方块（10px 字形），
+   在深灰工具条上像视频播放器。主操作「运行」改成 accent 实心，清空改成中性
+   图标按钮（hover 才泛红），这是 PS 面板里主次操作的标准写法。 */
+.tile .prompt-preset-run {
+  width: 26px; height: 21px;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-sm);
+  color: #fff;
+  font-size: 10px;
+}
+.tile .prompt-preset-run:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+.tile .prompt-preset-unload {
+  width: 24px; height: 21px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  color: var(--t2);
+  font-size: 14px;
+}
+.tile .prompt-preset-unload:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: transparent;
+  color: var(--t1);
+}
+.tile .prompt-preset-toggle { height: 21px; border-radius: var(--r-sm); }
+/* 文本域铺满面板（设计如此），但 11px + 与面板几乎同色的底，看起来像一片空白。
+   抬到 12px / 1.6 行高，底再压深一点，和工具条拉开层次。
+   tile-prompt.css 用 !important 锁了背景色，这里必须同权重压回去。 */
+.w10-panel.prompt-ta-panel .prompt-ta-wrap.prompt-ta-fill .prompt-ta {
+  font-size: var(--fs-md);
+  line-height: 1.6;
+  padding: 12px !important;
+  background: rgba(0, 0, 0, 0.22) !important;
+  color: var(--t1);
+  caret-color: var(--accent);
+}
+.prompt-ta-wrap.prompt-ta-fill .prompt-ta::placeholder { color: var(--t3); }
+
+/* ---------- 10. 日志面板 ---------- */
+/* 筛选项、搜索框 10px，时间戳 9px，正文还是 Consolas 绿色终端观感 —— 一套
+   调试控制台的样子。这里统一到面板正文尺寸，并把霓虹色压成低饱和状态色。 */
+.tile .log-filter-btn { font-size: var(--fs-sm); padding: 4px 9px; }
+.tile .log-search { font-size: var(--fs-sm); padding: 4px 8px; max-width: none; }
+.tile .log-clear-btn { font-size: var(--fs-sm); padding: 4px 10px; }
+.tile .log-toolbar { row-gap: 6px; }
+/* 搜索 + 清空独占一行：5 个筛选钮 + 搜索框在 280 宽下必定换行，
+   显式分行比让 flex 自己挤要好控制。 */
+.tile .log-toolbar-right { flex: 1 1 100%; }
+.tile .log-list {
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  border-radius: var(--r-sm);
+  padding: 6px 8px;
+}
+/* break-all 会把 conversation 拆成 c/onversation，只在必要时断词 */
+.tile .log-entry { word-break: normal; overflow-wrap: anywhere; }
+.tile .log-time { font-size: var(--fs-xs); color: var(--t3); font-variant-numeric: tabular-nums; }
+.tile .log-count { font-size: var(--fs-xs); }
+/* 霓虹绿/橙/红在深灰上刺眼，压成可长时间注视的状态色 */
+.tile .log-success, .tile .log-success .log-msg { color: #6fcf8f; }
+.tile .log-warn, .tile .log-warn .log-msg { color: #d9a45b; }
+.tile .log-error, .tile .log-error .log-msg { color: #e57373; }
+
+/* ---------- 11. 遮罩 ---------- */
 .expand-bg.show { background: rgba(0, 0, 0, 0.55); }
