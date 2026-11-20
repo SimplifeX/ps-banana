@@ -1,5 +1,7 @@
 /* defaults/default-layout.js — 插件默认布局
  * v6.5.8: 取自用户手工配置的「6.5.8新测试布局」+ Dock 配置(2026-08-02)
+ * v7:     重排主区。原来 presets/bodypreset 被顶栏挤到底部，导致第 2~3 行空 142px；
+ *         生成中心 4 行 → 2 行。只调位置，不动任何磁贴功能。
  * 含磁贴位置/尺寸/颜色/展开模式/外观 + Dock(钉选按钮/位置/大小/透明度)
  * 已剔除开发工具磁贴(perftest); 用户有任何存储值都会覆盖这些默认
  */
@@ -9,119 +11,119 @@ window._DEFAULT_LAYOUT = {
   "__tile_layout_v6": {
     "prompt": {
       "col": 3,
-      "row": 4,
+      "row": 2,
       "w": 2,
       "h": 4,
       "group": "main"
     },
     "params": {
       "col": 1,
-      "row": 4,
+      "row": 2,
       "w": 2,
       "h": 1,
       "group": "main"
     },
     "refimages": {
       "col": 1,
-      "row": 5,
+      "row": 3,
       "w": 2,
       "h": 1,
       "group": "main"
     },
     "batchworks": {
-      "col": 2,
-      "row": 7,
+      "col": 1,
+      "row": 5,
       "w": 1,
       "h": 1,
       "group": "main"
     },
     "records": {
-      "col": 1,
-      "row": 7,
+      "col": 2,
+      "row": 5,
       "w": 1,
       "h": 1,
       "group": "main"
     },
     "center": {
       "col": 1,
-      "row": 8,
+      "row": 9,
       "w": 4,
-      "h": 4,
+      "h": 2,
       "group": "main"
     },
     "presets": {
-      "col": 3,
-      "row": 1,
+      "col": 1,
+      "row": 6,
       "w": 2,
       "h": 3,
       "group": "main"
     },
     "bodypreset": {
-      "col": 1,
-      "row": 1,
+      "col": 3,
+      "row": 6,
       "w": 2,
       "h": 3,
       "group": "main"
     },
     "light": {
       "col": 1,
-      "row": 6,
+      "row": 4,
       "w": 1,
       "h": 1,
       "group": "main"
     },
     "hemisynth": {
       "col": 2,
-      "row": 6,
+      "row": 4,
       "w": 1,
       "h": 1,
       "group": "main"
     },
     "scope": {
-      "col": 2,
-      "row": 13,
+      "col": 1,
+      "row": 12,
       "w": 1,
       "h": 1,
       "group": "main"
     },
     "log": {
+      "col": 1,
+      "row": 11,
+      "w": 1,
+      "h": 1,
+      "group": "main"
+    },
+    "drawer": {
       "col": 2,
       "row": 12,
       "w": 1,
       "h": 1,
       "group": "main"
     },
-    "drawer": {
-      "col": 3,
-      "row": 13,
-      "w": 1,
-      "h": 1,
-      "group": "main"
-    },
     "settings": {
-      "col": 4,
-      "row": 12,
+      "col": 2,
+      "row": 11,
       "w": 1,
       "h": 1,
       "group": "main"
     },
     "billing": {
-      "col": 1,
-      "row": 12,
+      "col": 3,
+      "row": 11,
       "w": 1,
       "h": 1,
       "group": "main"
     },
     "dock": {
-      "col": 3,
-      "row": 12,
+      "col": 4,
+      "row": 11,
       "w": 1,
       "h": 1,
       "group": "main"
     },
     "netdoctor": {
-      "col": 1,
-      "row": 13,
+      "col": 3,
+      "row": 12,
       "w": 1,
       "h": 1,
       "group": "main"
@@ -189,7 +191,7 @@ window._DEFAULT_LAYOUT = {
     "tutorial",
     "stitch"
   ],
-  "appearance.themeColor": "#ba24ff",
+  "appearance.themeColor": "#2680eb",
   "appearance.blur": 3,
   "appearance.opacity": 88,
   "appearance.tileColorOpacity": 9,

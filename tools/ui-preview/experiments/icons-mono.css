@@ -1,0 +1,2 @@
+/* 实验 A：emoji 去色 → 银色单色，贴近 Adobe 的线性图标语言 */
+.tile-icon { filter: grayscale(1) brightness(1.32) contrast(0.92); }

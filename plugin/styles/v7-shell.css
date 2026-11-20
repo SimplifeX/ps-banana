@@ -1,0 +1,265 @@
+/* ============================================================
+ * v7-shell.css — 外壳与基础组件（深色，Adobe 原生取向）
+ *
+ * 只改「看得见的外壳」：磁贴网格、顶栏、展开面板里的基础控件。
+ * 不动布局引擎、不动交互逻辑、不改任何磁贴的 DOM 结构。
+ *
+ * 为什么去掉逐块 backdrop-filter：
+ *   原先每个 .tile 都挂 blur(16px) saturate(1.3)。在 UXP 里每个模糊层都要单独
+ *   离屏合成，90 个磁贴就是 90 个图层；而底层是纯色时模糊几乎看不出效果，
+ *   只剩性能开销。现在只在展开态（只有 1 个）保留模糊。
+ * ============================================================ */
+
+/* ---------- 1. 视口 ---------- */
+/* base.css 的 .bg-blur 写死了 rgba(30,30,46,var(--bg-opacity))，把底色锁在蓝紫上，
+ * 改 --bg 没用。这里直接接管，让底色跟随 --s0。 */
+.bg-blur { background: var(--s0); }
+
+.vp {
+  padding: var(--sp2) var(--sp2) 64px;
+  scrollbar-width: thin;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.28); background-clip: padding-box; }
+
+/* ---------- 2. 磁贴本体 ---------- */
+.tile {
+  background: var(--tile-bg);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--tile-radius);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: var(--sh1);
+}
+.tile:hover:not(.expanded):not(.expanding):not(.edit-mode):not(.panel-mode):not(.frozen) {
+  border-color: var(--line-strong);
+}
+
+/* hover 变亮：12% 太亮，在中性底上会发白 */
+.tile-reveal { background: rgba(255, 255, 255, 0.06); }
+
+/* 展开态才需要真正的「浮起来」 */
+.tile.expanded,
+.tile.expanding {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--sh3);
+  border-radius: var(--r-lg);
+  border-color: var(--line);
+}
+
+/* 展开态内容基准字号：10px 太小，面板正文跟着 PS 用 12px */
+.tile-expand-content { font-size: var(--fs-md); color: var(--text); line-height: var(--lh-base); }
+
+/* ---------- 3. 磁贴内部排版 ---------- */
+.tile-inner { padding: var(--sp1); }
+.tile-icon {
+  font-size: calc(21px * var(--tile-icon-scale, 1));
+  margin-bottom: 3px;
+  line-height: 1;
+  /* 磁贴图标是 emoji，彩色版本在深灰面板上很"玩具"，和 Adobe 的单色线性图标
+   * 语言冲突。去色提亮后可读性不掉，观感贴近 PS 原生。想去掉就删这一行。 */
+  filter: grayscale(1) brightness(1.32) contrast(0.92);
+}
+.tile-label {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0;
+  color: var(--t1);
+  /* 9px 单行 + 省略号会把「香蕉Pro」「提示词」截成「香蕉…」，
+   * 允许两行后 62px 格子里仍放得下（21px 图标 + 2×13px 行高）。 */
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+.tile-desc { font-size: var(--fs-xs); color: var(--t3); margin-top: 2px; }
+.tile-badge {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  padding: 0 4px;
+  border-radius: 8px;
+  top: 4px;
+  right: 4px;
+  background: var(--accent);
+  color: #fff;
+}
+.tile-expand-close {
+  width: 28px; height: 28px;
+  font-size: 16px;
+  border-radius: var(--r-sm);
+  color: var(--t2);
+  top: 8px; right: 8px;
+}
+.tile-expand-close:hover { background: rgba(255, 255, 255, 0.1); color: var(--t1); }
+
+/* 面板模式的大磁贴：给一点内边距，别贴着边框 */
+.tile.panel-mode { background: var(--s1); }
+
+/* ---------- 4. 顶栏 ---------- */
+#topbarHost { height: 32px; margin-bottom: var(--sp2); }
+#topbarHost .tile.locked-tile {
+  background: var(--s2);
+  border: 1px solid var(--line-soft);
+  box-shadow: var(--sh1);
+}
+/* 原来那条向下渐变的"光晕"在中性底上像脏边，收掉 */
+#topbarHost::after { display: none; }
+.tile.locked-tile:hover { background: var(--s3); }
+
+/* ---------- 5. 面板基础组件（替换 Win10/UWP 那套） ---------- */
+
+/* 小节标题：原来 11px 全大写 + 强调色，像网页；改成 PS 的灰色小标题 */
+.w10-section-title {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--t2);
+  text-transform: none;
+  letter-spacing: 0;
+  margin: 14px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+/* 行标题 / 说明 */
+.w10-row-label { font-size: var(--fs-md); font-weight: 400; color: var(--t1); }
+.w10-row-desc { font-size: var(--fs-sm); color: var(--t3); line-height: 1.35; }
+
+/* 输入框：去掉 UWP 的「粗下划线 + 上方圆角」 */
+.w10-input {
+  background: var(--s3);
+  border: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  color: var(--t1);
+  font-size: var(--fs-md);
+  padding: 5px 8px;
+  transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+.w10-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  outline: none;
+}
+.w10-input::placeholder { color: var(--t3); }
+
+/* 按钮：10px 字太小，PS 按钮是 12px / 4px 圆角 / 实心灰 */
+.w10-btn {
+  font-size: var(--fs-md);
+  font-weight: 400;
+  padding: 5px 12px;
+  border-radius: var(--r-sm);
+  background: var(--s3);
+  border: 1px solid var(--line-strong);
+  color: var(--t1);
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+.w10-btn:hover { background: var(--s4); border-color: var(--line-strong); }
+.w10-btn:active { transform: none; }
+.w10-btn-accent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 500;
+}
+.w10-btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+/* 开关：40×20 的胶囊太笨，PS 用 32×18 */
+.w10-toggle {
+  width: 32px; height: 18px;
+  border-radius: 9px;
+  background: var(--s4);
+  border: none;
+}
+.w10-toggle.on { background: var(--accent); }
+
+/* 滑块数值 */
+.w10-slider-val { font-size: var(--fs-sm); color: var(--t2); font-variant-numeric: tabular-nums; }
+
+/* 下拉框：10px → 12px，输入类控件统一 4px 圆角深灰底 */
+.w10-select {
+  background: var(--s3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  color: var(--t1);
+  font-size: var(--fs-md);
+  padding: 4px 8px;
+}
+.w10-select:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+
+/* 滑块：原来没关掉原生外观，右边露出 Chromium 的浅灰轨道（深色面板上像一道白条）。
+   统一成「深灰轨道 + accent 已填充段 + 小圆点」，有 --fill 就跟进度走。 */
+.w10-slider { min-width: 0; flex: 1; }
+/* 注意：tiles.css 里有一条 `.tile.expanded .tile-expand-content input[type=range]
+   {-webkit-appearance:auto}`（3 类 + 属性，权重高于这里的 2 类），专门把展开态滑块
+   打回原生外观。下面那条加权选择器就是为了压住它 —— 否则深色面板里会露出一道亮色原生轨道。 */
+.w10-slider input[type=range],
+.tile.expanded .tile-expand-content .w10-slider input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  border: none;
+  outline: none;
+  background: linear-gradient(to right,
+    var(--accent) 0 var(--fill, 0%),
+    var(--s4) var(--fill, 0%) 100%);
+}
+.w10-slider input[type=range]::-webkit-slider-runnable-track,
+.tile.expanded .tile-expand-content .w10-slider input[type=range]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: transparent;
+  border: none;
+}
+.w10-slider input[type=range]::-webkit-slider-thumb,
+.tile.expanded .tile-expand-content .w10-slider input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  margin-top: -4px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- 5.1 行布局防溢出 ---------- */
+/* 字号从 9~10px 提到 12px 后，原来的「标签 + 右侧控件」一行放不下了：
+   设置面板里「智能对象 / 普通图层」这类按钮会被裁掉，开关被切一半。
+   这里让右侧控件可以压缩、可以换行，而不是顶着右边界往外溢。 */
+.w10-row { gap: var(--sp2); }
+.w10-row-right {
+  /* 关键：不能让它被 row-left 挤压。flex-shrink:1 会让右侧在内容宽度不足时
+   * 提前换行（「智能对象 / 普通图层」曾被挤成上下两行），所以这里不收缩，
+   * 改由左侧文本区让位（.w10-row-left 已有 min-width:0）。 */
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-left: var(--sp2);
+}
+.w10-row-right .w10-btn {
+  max-width: 100%;
+  /* 一对互斥按钮（智能对象 / 普通图层）在 280 宽面板里要并排放下，
+   * 12px 字号 + 5/12 padding 会差几个像素，这里收到 4/9。 */
+  padding: 4px 9px;
+  /* 行内互斥按钮（智能对象 / 普通图层）用 11px：这是 Photoshop 面板里
+   * 行内小控件的老规矩，也给 280 宽留出余量，不至于顶到右边界。 */
+  font-size: var(--fs-sm);
+}
+.w10-btn { white-space: nowrap; }
+
+/* 展开态头部：原来留了一大块空白（约 60px），收紧凑些 */
+.tile.expanded .tile-inner,
+.tile.expanding .tile-inner { padding: 10px 12px; height: auto !important; min-height: 0; }
+.tile.expanded .tile-flip-box,
+.tile.expanding .tile-flip-box { height: auto !important; }
+
+/* ---------- 6. 遮罩 ---------- */
+.expand-bg.show { background: rgba(0, 0, 0, 0.55); }
