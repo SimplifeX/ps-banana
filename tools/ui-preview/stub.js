@@ -163,6 +163,14 @@
           over: hits[j][1]
         });
       }
+      var ts = document.querySelectorAll('.tile'), geo = [];
+      for (var t = 0; t < Math.min(ts.length, 10); t++) {
+        var tr = ts[t].getBoundingClientRect();
+        geo.push(ts[t].getAttribute('data-id') + ':' + Math.round(tr.width) + 'x'
+          + Math.round(tr.height) + '@' + Math.round(tr.left) + ',' + Math.round(tr.top));
+      }
+      out.geo = geo;
+      out.cell = getComputedStyle(document.documentElement).getPropertyValue('--cell').trim();
       out.clipN = hits.length;
       out.clip = keep.slice(0, 10);
       document.title = JSON.stringify(out);
