@@ -372,5 +372,25 @@
 .tile .log-warn, .tile .log-warn .log-msg { color: #d9a45b; }
 .tile .log-error, .tile .log-error .log-msg { color: #e57373; }
 
-/* ---------- 11. 遮罩 ---------- */
+/* ---------- 11. 参数磁贴的条状工具栏（折叠态） ---------- */
+/* 这 5 个 mini 标签原来是 9px、全大写、强调色、加字距 —— 正是「不像 Adobe」
+   的另一处来源（Adobe 的小标签是中性灰、不加字距）。 */
+.tile .params-toolbar-label {
+  font-size: var(--fs-xs);
+  color: var(--t3);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.tile .params-toolbar { gap: 4px; }
+.tile .params-strip-select.w10-select {
+  font-size: var(--fs-sm);
+  padding: 2px 4px;
+}
+
+/* 提示词磁贴折叠态的预设条：8px 间距 + 8px 内距把标题挤到只剩 17px，
+   「提示词」被截成「提…」。收到 4/6 后 125 宽的磁贴能完整显示三个字。 */
+.tile .prompt-preset-head { gap: 4px; padding: 4px 6px; }
+
+/* ---------- 12. 遮罩 ---------- */
 .expand-bg.show { background: rgba(0, 0, 0, 0.55); }
